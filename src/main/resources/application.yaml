@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: demo
+  datasource:
+    url: jdbc:postgresql://localhost:5432/clıckup_db #bunun gibi db infoları env dan almam  lazım
+    username: postgres
+    password: "Postgres123!"
+  jpa:
+    hibernate:
+      ddl-auto: update #validate ve migration flyway yönetilmeli
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+clickup:
+  api:
+    base-url: "https://api.clickup.com/api/v2"
+    token: "pk_240227764_3TEOOT6VGGD8KEFT28BC18757K0NOEPW"
+    team_id:
+    endpoints:
+      teams: "/team"
+      spaces: "/team/{teamId}/space"
