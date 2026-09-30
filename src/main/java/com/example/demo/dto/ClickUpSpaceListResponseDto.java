@@ -1,19 +1,18 @@
 package com.example.demo.dto;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public record ClickUpSpaceListResponseDto(
-        List<ClickUpSpaceDto> spaces
+        List<SpaceDto> spaces
 ) {
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record ClickUpSpaceDto(
+    public record SpaceDto(
             String id,
             String name,
-            String color,
-            @JsonProperty("private") Boolean isPrivate,
-            @JsonProperty("archived") Boolean isArchived
+
+            @JsonProperty("private") // Java'da rezerve kelime olduğu için özel olarak belirtiyoruz
+            Boolean privateSpace,
+
+            Boolean multipleAssignees, // multiple_assignees -> multipleAssignees (Otomatik eşleşir)
+            Boolean archived           // archived -> archived
     ) {}
 }

@@ -1,15 +1,38 @@
 package com.example.demo.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public record ClickUpTeamResponseDto(
-        List<TeamDto> teams //not necesssary
+        @JsonProperty("teams")
+        List<ClickUpWorkspaceDto> workspaces
 ) {
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record TeamDto(
+
+    public record ClickUpWorkspaceDto(
             String id,
-            String name
+            String name,
+            List<ClickUpWorkspaceMemberDto> members
+    ) {}
+
+    public record ClickUpWorkspaceMemberDto(
+            ClickUpUserDto user,
+
+            @JsonProperty("invited_by") ClickUpInvitedByDto invitedBy
+    ) {}
+
+    public record ClickUpUserDto(
+            Long id,
+            String username,
+            String email,
+            @JsonProperty("profile_picture") String profilePicture,
+            @JsonProperty("date_joined") String dateJoined,
+            @JsonProperty("date_invited") String dateInvited,
+            @JsonProperty("role_key") String roleKey
+    ) {}
+
+    public record ClickUpInvitedByDto(
+            Long id,
+            String username,
+            String email
     ) {}
 }

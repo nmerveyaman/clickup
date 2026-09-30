@@ -34,6 +34,12 @@ dependencies {
 	// Test
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+	//Swagger
+	//testImplementation("org.springdoc.springdoc-openapi-starter-webmvc-ui:2.3.0")
+
+	// Gson
+	implementation("com.google.code.gson:gson")
 }
 
 tasks.withType<Test> {

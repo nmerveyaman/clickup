@@ -17,7 +17,7 @@ public class DemoApplication {
 	CommandLineRunner run(ClickUpSyncService syncService) {
 		return args -> {
 			System.out.println(">>> ClickUp Senkronizasyonu tetikleniyor...");
-			syncService.syncSpacesFromClickUp();
+			syncService.syncClickUpData();
 		};
 	}
 }
