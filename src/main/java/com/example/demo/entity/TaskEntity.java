@@ -47,6 +47,12 @@ public class TaskEntity {
     @Column(name="list_id")
     private String listId;
 
+    @Column(name="priority")
+    private String priority;
+
+    @Column(name="blocked_by_task_id")
+    private String blockedByTaskId;
+
     @ManyToMany
     @JoinTable(
             name= "task_assignees",

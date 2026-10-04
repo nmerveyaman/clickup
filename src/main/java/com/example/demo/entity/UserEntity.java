@@ -26,9 +26,6 @@ public class UserEntity {
     @Column(name = "email")
     private String email;
 
-    @Column(name = "color")
-    private String color;
-
     @Column(name = "profile_picture")
     private String profilePicture;
 }

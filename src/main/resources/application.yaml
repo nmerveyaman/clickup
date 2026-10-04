@@ -6,22 +6,19 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:Postgres123!}
 
-  #jackson:
-   # property-naming-strategy: SNAKE_CASE
+  #flyway:
+    #enabled: true
+    #locations: classpath:db/migration
 
   jpa:
     hibernate:
-      ddl-auto: create #validate ve migration flyway yönetilmeli
+      ddl-auto: update
     show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 clickup:
   api:
     base-url: "https://api.clickup.com/api/v2"
-    token: "pk_240227764_3TEOOT6VGGD8KEFT28BC18757K0NOEPW"
-    team_id: "team_id"
+    token: "${CLICKUP_API_TOKEN}"
     endpoints:
       teams: "/team"
       spaces: "/team/{teamId}/space"
