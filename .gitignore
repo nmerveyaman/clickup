@@ -1,0 +1,19 @@
+# Sensitive Env Variables
+.env
+*.env
+
+# Frontend / Node
+node_modules/
+dist/
+.vite/
+
+# Backend / Gradle / Java
+.gradle/
+build/
+out/
+target/
+*.jar
+
+# IDE
+.idea/
+.vscode/

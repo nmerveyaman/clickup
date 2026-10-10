@@ -1,0 +1,63 @@
+﻿version: '3.8'
+
+services:
+  # Veritabanı Servisi
+  postgres:
+    image: postgres:17-alpine
+    container_name: clickup-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: clıckup_db
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-your_db_password}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d clıckup_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: ./clickupp
+      dockerfile: Dockerfile
+    container_name: clickup-backend
+    restart: always
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    # Root dizindeki .env dosyasındaki değişkenleri doğrudan konteynere aktarır:
+    env_file:
+      - .env
+    environment:
+      - DB_URL=${DB_URL:-jdbc:postgresql://postgres:5432/clıckup_db}
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-your_db_password}
+      - CLICKUP_API_TOKEN=${CLICKUP_API_TOKEN}
+      - CLICKUP_CLIENT_ID=${CLICKUP_CLIENT_ID}
+      - CLICKUP_CLIENT_SECRET=${CLICKUP_CLIENT_SECRET}
+      - CLICKUP_REDIRECT_URI=${CLICKUP_REDIRECT_URI}
+
+  # React + Vite Frontend
+  frontend:
+    build:
+      context: ./clickup-frontend
+      dockerfile: Dockerfile
+    container_name: clickup-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
