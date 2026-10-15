@@ -5,10 +5,12 @@ import com.example.demo.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,43 +18,37 @@ public class AuthController {
 
     private final AuthService authService;
 
-    // 1. Giriş Başlatma: http://localhost:8080/login
-    @GetMapping({"/login", "/api/auth/clickup/login"})
-    public ResponseEntity<Void> redirectToClickUp() {
-        String url = authService.getClickUpLoginUrl();
+    @GetMapping("/login")
+    public ResponseEntity<Void> login() {
+        String clickUpLoginUrl = authService.getClickUpLoginUrl();
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create(url))
+                .location(URI.create(clickUpLoginUrl))
                 .build();
     }
 
-    // 2. ClickUp'tan Dönüş: Kodu kullanır ve anında /auth/success sayfasına yönlendirir!
-    @GetMapping(value = {"/", "/api/auth/clickup/callback"}, params = "code")
+    @GetMapping("/callback")
     public ResponseEntity<Void> handleCallback(@RequestParam("code") String code) {
-        System.out.println("ClickUp'tan gelen code yakalandı: " + code);
+        // 1. OAuth kodunu exchange et ve kullanıcıyı kaydet/güncelle
         UserEntity user = authService.loginWithClickUpCode(code);
 
-        String successUrl = "http://localhost:5173/?userId=" + user.getId()
-                + "&username=" + user.getUsername()
-                + "&role=" + user.getAppRole();
+        // 2. Kullanıcının varsayılan workspace id'sini al
+        String defaultWorkspaceId = authService.getUserDefaultWorkspaceId(user.getId());
+
+        // 3. Frontend adresini dinamik oku (Varsayılan: Nginx portu olan http://localhost)
+        String frontendUrl = System.getenv().getOrDefault("FRONTEND_URL", "http://localhost");
+
+        // 4. UriComponentsBuilder ile encode() çağırarak URI nesnesine çeviriyoruz
+        URI targetUri = UriComponentsBuilder.fromHttpUrl(frontendUrl + "/dashboard")
+                .queryParam("userId", user.getId())
+                .queryParam("username", user.getUsername())
+                .queryParam("role", user.getAppRole())
+                .queryParam("workspaceId", defaultWorkspaceId)
+                .encode() // <-- KRİTİK NOKTA: Boşlukları %20 formatına encode eder
+                .build()
+                .toUri();
 
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create(successUrl))
+                .location(targetUri)
                 .build();
-    }
-
-    // 3. Temiz Başarılı Ekranı (Sayfayı yenilesen de hata vermez!)
-    @GetMapping("/auth/success")
-    public ResponseEntity<Map<String, Object>> authSuccess(
-            @RequestParam Long userId,
-            @RequestParam String username,
-            @RequestParam String role
-    ) {
-        return ResponseEntity.ok(Map.of(
-                "status", "SUCCESS",
-                "message", "ClickUp OAuth girişi ve senkronizasyon başarılı!",
-                "userId", userId,
-                "username", username,
-                "role", role
-        ));
     }
 }

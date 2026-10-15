@@ -2,42 +2,49 @@ package com.example.demo.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
 
 @Data
+@Getter
+
+
 public class SprintAnalyticsResponse {
     private String listId;
     private String listName;
     private Long effectiveSprintStartDate;
     private Long sprintDueDate;
+    private List<ClickUpStatusDto> availableColumns;
+    private Map<Long, ClickUpTeamResponseDto.ClickUpUserDto> usersMap;
 
-    // 1. Genel Sprint Özeti ve Oran
     private int totalTasks;
-    private int completedTasks;   // statusType = closed / done
-    private int inProgressTasks;  // statusType = custom (Aktif üzerinde çalışılanlar)
-    private int todoTasks;        // statusType = open / unstarted (Henüz başlanmamışlar)
-    private String completionRatio; // Örn: "10 / 30"
-    private int totalActiveAssignees; // Bu sprintte görev almış/çalışmış toplam kişi sayısı
+    private int completedTasks;
+    private String completionRatio;
+    private int totalActiveAssignees;
+    private Map<String, Integer> taskCountPerColumn;
 
-    // 2. Risk ve Kalite Metrikleri (Varsa gösterilecekler)
+    private Map<String, Integer> userTaskCounts;
     private int scopeCreepTaskCount;
-    private List<TaskSummaryDto> scopeCreepTasks; // Hangi task'lar scope creep?
+    private List<TaskSummaryDto> scopeCreepTasks;
 
     private int stalledTaskCount;
-    private List<TaskSummaryDto> stalledTasks;    // Hangi task'lar stalled (hareketsiz)?
+    private List<TaskSummaryDto> stalledTasks;
 
     private int blockedTaskCount;
-    private List<TaskSummaryDto> blockedTasks;    // Hangi task'lar bloklu?
+    private List<TaskSummaryDto> blockedTasks;
 
     private int totalRollbackCount;
 
     // 3. Efor ve Darboğaz (Bottleneck)
+    private String totalSprintTaskDuration;
     private String totalSprintActiveWorkingTime;
-    private String bottleneckColumn; // Aktif ("custom") statüler arasında en çok vakit harcanan kolon
+    private String totalSprintWaitingTime;
+    private String bottleneckColumn;
     private Map<Long, String> userTotalActiveWorkingTimes; // Kullanıcı bazlı toplam aktif çalışma süreleri
+    private Map<Long, String> userTotalWaitingTimes;
 
     // 4. Tüm Görevlerin Detaylı Analiz Listesi
     private List<TaskAnalyticsResponse> taskAnalyticsList;
@@ -49,5 +56,6 @@ public class SprintAnalyticsResponse {
         private String taskId;
         private String taskName;
         private String currentStatus;
+
     }
 }

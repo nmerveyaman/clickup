@@ -1,7 +1,7 @@
 # Sensitive Env Variables
 .env
 *.env
-
+dump.sql
 # Frontend / Node
 node_modules/
 dist/

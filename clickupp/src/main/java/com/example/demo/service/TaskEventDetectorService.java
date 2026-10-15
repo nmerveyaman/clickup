@@ -1,12 +1,15 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.ClickUpTaskDto;
+import com.example.demo.dto.TaskEventNotification;
+import com.example.demo.event.TaskChangedEvent;
 import com.example.demo.entity.TaskEntity;
 import com.example.demo.entity.TaskEventEntity;
 import com.example.demo.enums.TaskEventType;
 import com.example.demo.repository.TaskEventRepository;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -16,6 +19,7 @@ import java.util.Objects;
 public class TaskEventDetectorService {
 
     private final TaskEventRepository taskEventRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void detectAndRecordEvents(TaskEntity dbTask, ClickUpTaskDto apiTask) {
         String eventTime = apiTask.dateUpdated() != null
@@ -28,13 +32,30 @@ public class TaskEventDetectorService {
         // 1. ASSIGNEE (KİŞİ) DEĞİŞİMİ KONTROLÜ
         if (!Objects.equals(oldAssigneeId, newAssigneeId)) {
             saveEvent(
-                    dbTask.getId(),
+                    dbTask,
+                    apiTask,
                     TaskEventType.ASSIGNEE_CHANGED,
                     oldAssigneeId,
                     newAssigneeId,
                     dbTask.getStatusName(),
                     dbTask.getStatusName(),
                     eventTime
+            );
+        }
+
+        String newPriority = apiTask.priority() != null ? apiTask.priority().priority() : null;
+        if (!Objects.equals(dbTask.getPriority(), newPriority)) {
+            saveEvent(
+                    dbTask,
+                    apiTask,
+                    TaskEventType.PRIORITY_CHANGED,
+                    oldAssigneeId,
+                    newAssigneeId,
+                    null,
+                    null,
+                    eventTime,
+                    dbTask.getPriority(),
+                    newPriority
             );
         }
 
@@ -45,7 +66,8 @@ public class TaskEventDetectorService {
         String newListId = apiTask.list() != null ? apiTask.list().id() : null;
         if (dbTask.getListId() != null && newListId != null && !Objects.equals(dbTask.getListId(), newListId)) {
             saveEvent(
-                    dbTask.getId(),
+                    dbTask,
+                    apiTask,
                     TaskEventType.MOVED_TO_LIST,
                     oldAssigneeId,
                     newAssigneeId,
@@ -80,7 +102,8 @@ public class TaskEventDetectorService {
         }
 
         saveEvent(
-                dbTask.getId(),
+                dbTask,
+                apiTask,
                 eventType,
                 currentAssigneeId,
                 currentAssigneeId,
@@ -90,20 +113,40 @@ public class TaskEventDetectorService {
         );
     }
 
-    private void saveEvent(String taskId, TaskEventType type, Long fromAssignee, Long toAssignee,
+    private void saveEvent(TaskEntity dbTask, ClickUpTaskDto apiTask, TaskEventType type, Long fromAssignee, Long toAssignee,
                            String fromStatus, String toStatus, String timestamp) {
-        System.out.println("EVENT YAKALANDI ve KAYDEDİLİYOR: " + type); // <-- Bu log konsola düşüyor mu?
+        saveEvent(dbTask, apiTask, type, fromAssignee, toAssignee, fromStatus, toStatus, timestamp, null, null);
+    }
+
+    private void saveEvent(TaskEntity dbTask, ClickUpTaskDto apiTask, TaskEventType type, Long fromAssignee, Long toAssignee,
+                           String fromStatus, String toStatus, String timestamp, String fromPriority, String toPriority) {
         TaskEventEntity event = TaskEventEntity.builder()
-                .taskId(taskId)
+                .taskId(dbTask.getId())
                 .eventType(type)
                 .fromAssignee(fromAssignee)
                 .toAssignee(toAssignee)
                 .fromStatus(fromStatus)
                 .toStatus(toStatus)
+                .fromPriority(fromPriority)
+                .toPriority(toPriority)
                 .timestamp(timestamp)
                 .build();
 
-        taskEventRepository.save(event);
+        TaskEventEntity savedEvent = taskEventRepository.save(event);
+        String listId = apiTask.list() != null ? apiTask.list().id() : dbTask.getListId();
+        eventPublisher.publishEvent(new TaskChangedEvent(new TaskEventNotification(
+                savedEvent.getId(),
+                dbTask.getWorkspaceId(),
+                listId,
+                dbTask.getId(),
+                apiTask.name(),
+                type.name(),
+                fromStatus,
+                toStatus,
+                timestamp,
+                fromPriority,
+                toPriority
+        )));
     }
 
     private Long extractDbFirstAssigneeId(TaskEntity dbTask) {

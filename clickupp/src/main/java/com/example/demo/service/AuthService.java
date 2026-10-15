@@ -7,10 +7,12 @@ import com.example.demo.entity.UserEntity;
 import com.example.demo.enums.Role;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.WorkspaceMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +21,8 @@ public class AuthService {
     private final ClickUpClient clickUpClient;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final ClickUpSyncService clickUpSyncService; // <-- 1. EKLENEN: Senkronizasyon servisini buraya bağladık
+    private final ClickUpSyncService clickUpSyncService;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
     @Value("${clickup.oauth.client-id}")
     private String clientId;
@@ -31,7 +34,19 @@ public class AuthService {
     private String redirectUri;
 
     public String getClickUpLoginUrl() {
-        return "https://app.clickup.com/api?client_id=" + clientId + "&redirect_uri=" + redirectUri;
+        if (clientId == null || clientId.isBlank()) {
+            throw new IllegalStateException("CLICKUP_CLIENT_ID yapılandırılmamış.");
+        }
+        if (redirectUri == null || redirectUri.isBlank()) {
+            throw new IllegalStateException("CLICKUP_REDIRECT_URI yapılandırılmamış.");
+        }
+
+        return UriComponentsBuilder.fromUriString("https://app.clickup.com/api")
+                .queryParam("client_id", clientId.trim())
+                .queryParam("redirect_uri", redirectUri.trim())
+                .build()
+                .encode()
+                .toUriString();
     }
 
     @Transactional
@@ -43,7 +58,7 @@ public class AuthService {
         ClickUpAuthorizedUserResponseDto authUser = clickUpClient.getAuthorizedUser(accessToken);
         var userDto = authUser.user();
 
-        // 3. Kullanıcı DB'de varsa güncelle, yoksa yeni oluştur
+        // 3. Kullanıcı DB'de varsa güncelle, yoksa yeni oluştur (UPSERT)
         UserEntity user = userRepository.findById(userDto.id())
                 .map(existing -> {
                     existing.setUsername(userDto.username());
@@ -53,7 +68,7 @@ public class AuthService {
                 })
                 .orElseGet(() -> userMapper.toEntity(userDto));
 
-        // 4. Kişisel OAuth token'ını kaydet
+        // 4. Kişisel OAuth token'ını kaydet/güncelle
         user.setAccessToken(accessToken);
 
         // 5. Rolü henüz atanmamışsa ClickUp'taki role_key'e göre otomatik ata
@@ -64,10 +79,20 @@ public class AuthService {
         // 6. Kullanıcıyı DB'ye kaydet
         UserEntity savedUser = userRepository.save(user);
 
-        // <-- 2. EKLENEN: Kullanıcı kaydedilir kaydedilmez, onun token'ı ile Workspace verilerini hemen çek!
+        // 7. Kullanıcı kaydedilir kaydedilmez, onun token'ı ile Workspace verilerini hemen çek!
         clickUpSyncService.syncForSingleUser(accessToken);
 
         return savedUser;
+    }
+
+    /**
+     * Kullanıcının üyesi olduğu ilk senkronize Workspace ID'sini getirir.
+     */
+    @Transactional(readOnly = true)
+    public String getUserDefaultWorkspaceId(Long userId) {
+        return workspaceMemberRepository.findFirstByUserIdOrderByIdAsc(userId)
+                .map(member -> member.getWorkspaceId())
+                .orElse("");
     }
 
     private Role determineInitialRole(Long userId, String accessToken) {

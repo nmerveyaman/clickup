@@ -1,5 +1,6 @@
 plugins {
 	java
+	idea
 	id("org.springframework.boot") version "3.5.16"
 	id("io.spring.dependency-management") version "1.1.7"
 }
@@ -26,7 +27,10 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	// JPA
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-
+	implementation("org.springframework:spring-tx")
+	//flyway
+	implementation("org.flywaydb:flyway-core")
+	implementation("org.flywaydb:flyway-database-postgresql")
 	// PostgreSQL
 	runtimeOnly("org.postgresql:postgresql")
 
@@ -56,6 +60,8 @@ dependencies {
 	// .env dosyası yükleme
 	implementation("io.github.cdimascio:dotenv-java:3.0.0")
 
+	// h'bernate validator dto validasyonları için
+	implementation("org.springframework.boot:spring-boot-starter-validation")
 	// Gson
 	implementation("com.google.code.gson:gson")
 }

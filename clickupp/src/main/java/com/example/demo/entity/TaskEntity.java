@@ -41,7 +41,7 @@ public class TaskEntity {
     @Column(name = "date_closed")
     private String dateClosed;
 
-    @Column (name = "date_done")
+    @Column(name = "date_done")
     private String dateDone;
 
     @Column(name="creator_id")
@@ -63,6 +63,31 @@ public class TaskEntity {
             inverseJoinColumns = @JoinColumn(name="user_id"))
     private List<UserEntity> assignees;
 
-
-
+    public TaskEntity(
+            String id,
+            String name,
+            String statusName,
+            String statusType,
+            String orderIndex,
+            String dateCreated,
+            String dateUpdated,
+            String dateClosed,
+            String dateDone,
+            String creatorId,
+            String listId,
+            List<UserEntity> assignees
+    ) {
+        this.id = id;
+        this.name = name;
+        this.statusName = statusName;
+        this.statusType = statusType;
+        this.orderIndex = orderIndex;
+        this.dateCreated = dateCreated;
+        this.dateUpdated = dateUpdated;
+        this.dateClosed = dateClosed;
+        this.dateDone = dateDone;
+        this.creatorId = creatorId;
+        this.listId = listId;
+        this.assignees = assignees;
+    }
 }

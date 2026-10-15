@@ -1,42 +1,64 @@
-// import axios from 'axios';
-// import { API_URLS } from '../constants/apiUrls';
-// import type {
-//   SprintAnalyticsResponse,
-//   TaskAnalyticsResponse,
-//   UserGanttAnalyticsResponse,
-// } from './analytics.types';
-//
-// const apiClient = axios.create({
-//   baseURL: API_URLS.BASE_URL,
-//   withCredentials: true, // Eğer cookie/session kullanıyorsan gerekli
-// });
-//
-// /*export const analyticsApi = {
-//   getSprintAnalytics: async (listId: string): Promise<SprintAnalyticsResponse> => {
-//     const response = await apiClient.get<SprintAnalyticsResponse>(
-//       API_URLS.ANALYTICS.SPRINT(listId)
-//     );
-//     return response.data;
-//   },
-// */
-//   getTaskAnalytics: async (taskId: string): Promise<TaskAnalyticsResponse> => {
-//     const response = await apiClient.get<TaskAnalyticsResponse>(
-//       API_URLS.ANALYTICS.TASK(taskId)
-//     );
-//     return response.data;
-//   },
-//
-//   getUserGanttAnalytics: async (
-//     userId: number | string,
-//     listId?: string
-//   ): Promise<UserGanttAnalyticsResponse> => {
-//     const response = await apiClient.get<UserGanttAnalyticsResponse>(
-//       API_URLS.ANALYTICS.USER_GANTT(userId),
-//       {
-//         params: listId ? { listId } : undefined,
-//       }
-//     );
-//     return response.data;
-//   },
-// };
-//
+export interface ClickUpListDto {
+  id: string;
+  name: string;
+  taskCount?: number;
+  spaceId?: string;
+  folderId?: string;
+}
+
+export interface ClickUpListResponseDto {
+  lists: ClickUpListDto[];
+}
+
+export interface TaskSummaryDto {
+  id: string;
+  name: string;
+  statusName: string;
+}
+
+export interface SprintAnalyticsResponse {
+  listId: string;
+  listName: string;
+  effectiveSprintStartDate?: number;
+  sprintDueDate?: number;
+  totalTasks: number;
+  completedTasks: number;
+  inProgressTasks: number;
+  todoTasks: number;
+  completionRatio: string;
+  totalActiveAssignees: number;
+  scopeCreepTaskCount: number;
+  scopeCreepTasks: TaskSummaryDto[];
+  stalledTaskCount: number;
+  stalledTasks: TaskSummaryDto[];
+  blockedTaskCount: number;
+  blockedTasks: TaskSummaryDto[];
+  totalRollbackCount: number;
+  totalSprintActiveWorkingTime: string;
+  bottleneckColumn?: string;
+  userTotalActiveWorkingTimes: Record<string, string>;
+  taskAnalyticsList: any[];
+}
+
+export interface UserGanttAnalyticsResponse {
+  userId: number;
+  listId?: string;
+  netTotalActiveWorkingTime: string;
+  rawTotalTaskWorkingTime: string;
+  totalAssignedTasksCount: number;
+  taskTimelines: {
+    taskId: string;
+    taskName: string;
+    statusName: string;
+    totalWorkingTime: string;
+    firstStartedAt: number;
+    lastEndedAt: number;
+    workIntervals: {
+      statusName: string;
+      startTimestamp: number;
+      endTimestamp: number;
+      durationFormatted: string;
+      durationMillis: number;
+    }[];
+  }[];
+}

@@ -8,6 +8,9 @@ import org.springframework.context.annotation.Bean;
 import com.example.demo.service.ClickUpSyncService;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 @SpringBootApplication
 @EnableScheduling
 public class DemoApplication {
@@ -18,15 +21,26 @@ public class DemoApplication {
 	}
 
 	private static void loadDotEnv() {
-		Dotenv.configure()
-				.ignoreIfMissing()
-				.load()
-				.entries()
-				.forEach(e -> {
-					if (System.getProperty(e.getKey()) == null && System.getenv(e.getKey()) == null) {
-						System.setProperty(e.getKey(), e.getValue());
-					}
-				});
+		Path workingDirectory = Path.of("").toAbsolutePath().normalize();
+		for (Path directory : new Path[]{workingDirectory, workingDirectory.getParent()}) {
+			if (directory == null || !Files.isRegularFile(directory.resolve(".env"))) {
+				continue;
+			}
+
+			Dotenv.configure()
+					.directory(directory.toString())
+					.ignoreIfMissing()
+					.load()
+					.entries()
+					.forEach(entry -> {
+						String systemProperty = System.getProperty(entry.getKey());
+						String environmentVariable = System.getenv(entry.getKey());
+						if ((systemProperty == null || systemProperty.isBlank())
+								&& (environmentVariable == null || environmentVariable.isBlank())) {
+							System.setProperty(entry.getKey(), entry.getValue());
+						}
+					});
+		}
 	}
 
 	@Bean

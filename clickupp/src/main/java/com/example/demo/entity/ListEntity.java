@@ -29,12 +29,15 @@ public class ListEntity {
     @Column(name = "folder_id")
     private String folderId;
 
-    @Column(name="task_count")
+    @Column(name = "task_count")
     private Integer taskCount;
 
-    @Column (name="start_date")
+    @Column(name = "start_date")
     private Long startDate;
 
-    @Column (name="due_date")
+    @Column(name = "due_date")
     private Long dueDate;
+
+    @Column(name = "statuses_json", columnDefinition = "TEXT")
+    private String statusesJson;
 }

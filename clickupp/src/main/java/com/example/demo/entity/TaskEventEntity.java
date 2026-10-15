@@ -39,6 +39,12 @@ public class TaskEventEntity {
     @Column(name = "to_status")
     private String toStatus;
 
+    @Column(name = "from_priority")
+    private String fromPriority;
+
+    @Column(name = "to_priority")
+    private String toPriority;
+
 
     @Column(name = "from_assignee")
     private Long  fromAssignee;

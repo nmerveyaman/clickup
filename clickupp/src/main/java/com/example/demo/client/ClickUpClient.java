@@ -14,6 +14,7 @@ public class ClickUpClient {
     private final String folderUri;
     private final String spaceListUri;
     private final String taskUri;
+    private final String apiToken;
 
     public ClickUpClient(
             @Value("${clickup.api.base-url}") String baseUrl,
@@ -21,18 +22,44 @@ public class ClickUpClient {
             @Value("${clickup.api.endpoints.spaces}") String spaceUri,
             @Value("${clickup.api.endpoints.folders}") String folderUri,
             @Value("${clickup.api.endpoints.space_list}") String spaceListUri,
-            @Value("${clickup.api.endpoints.tasks}") String taskUri
+            @Value("${clickup.api.endpoints.tasks}") String taskUri,
+            @Value("${clickup.api.token:}") String apiToken
     ) {
         this.teamUri = teamUri;
         this.spaceUri = spaceUri;
         this.folderUri = folderUri;
         this.spaceListUri = spaceListUri;
         this.taskUri = taskUri;
+        this.apiToken = apiToken;
 
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader("Accept", "application/json")
                 .build();
+    }
+
+    public ClickUpTeamResponseDto getTeams() {
+        return getTeams(apiToken);
+    }
+
+    public ClickUpSpaceListResponseDto getSpaces(String teamId) {
+        return getSpaces(teamId, apiToken);
+    }
+
+    public ClickUpFolderListResponseDto getFolders(String spaceId) {
+        return getFolders(spaceId, apiToken);
+    }
+
+    public ClickUpListResponseDto getListsBySpace(String spaceId) {
+        return getListsBySpace(spaceId, apiToken);
+    }
+
+    public ClickUpTaskResponseDto getTasks(String teamId) {
+        return getTasks(teamId, apiToken);
+    }
+
+    public ClickUpListDto getList(String listId) {
+        return getList(listId, apiToken);
     }
 
     public String exchangeCodeForToken(String clientId, String clientSecret, String code) {
@@ -91,6 +118,14 @@ public class ClickUpClient {
                 .header("Authorization", formatToken(accessToken))
                 .retrieve()
                 .body(ClickUpListResponseDto.class);
+    }
+
+    public ClickUpListDto getList(String listId, String accessToken) {
+        return restClient.get()
+                .uri("/list/{listId}", listId)
+                .header("Authorization", formatToken(accessToken))
+                .retrieve()
+                .body(ClickUpListDto.class);
     }
 
     public ClickUpTaskResponseDto getTasks(String teamId, String accessToken) {

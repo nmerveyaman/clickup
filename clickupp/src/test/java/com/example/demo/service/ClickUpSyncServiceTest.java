@@ -5,6 +5,7 @@ import com.example.demo.dto.*;
 import com.example.demo.entity.*;
 import com.example.demo.mapper.*;
 import com.example.demo.repository.*;
+import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,6 +34,7 @@ class ClickUpSyncServiceTest {
     @Mock private FolderMapper folderMapper;
     @Mock private ListMapper listMapper;
     @Mock private TaskMapper taskMapper;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ClickUpSyncService syncService;
@@ -131,7 +133,9 @@ class ClickUpSyncServiceTest {
                 new ClickUpTaskDto.StatusDto("open", "open"),
                 new ClickUpTaskDto.CreatorDto("c1"),
                 new ClickUpTaskDto.ListObjDto("l1"),
-                List.of());
+                List.of(),
+                new ClickUpTaskDto.PriorityDto("high"),
+                null);
         var taskResponse = new ClickUpTaskResponseDto(List.of(taskDto));
         var taskEntity = new TaskEntity("t1", "Task", "open", "open", "1", "100", "200", null, null, "c1", "l1", List.of());
 
@@ -143,6 +147,8 @@ class ClickUpSyncServiceTest {
 
         syncService.syncClickUpData();
 
-        verify(taskRepository).save(taskEntity);
+        var savedTask = org.mockito.ArgumentCaptor.forClass(TaskEntity.class);
+        verify(taskRepository).save(savedTask.capture());
+        org.assertj.core.api.Assertions.assertThat(savedTask.getValue().getPriority()).isEqualTo("high");
     }
 }
