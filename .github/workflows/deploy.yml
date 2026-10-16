@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Deploy backend
         env:
-          DEPLOY_HOOK: ${{https://api.render.com/deploy/srv-db8nnd7f3r2c73eoh3rg?key=GZmKQLLZKhQ}}
+        DEPLOY_HOOK: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}
         run: |
           if [ -z "$DEPLOY_HOOK" ]; then
             echo "Missing GitHub secret: RENDER_BACKEND_DEPLOY_HOOK" >&2
@@ -26,7 +26,7 @@ jobs:
 
       - name: Deploy frontend
         env:
-          DEPLOY_HOOK: ${{https://api.render.com/deploy/srv-db8npqbbc2fs73bhqkc0?key=j2w28f_3Yiw}}
+        DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
         run: |
           if [ -z "$DEPLOY_HOOK" ]; then
             echo "Missing GitHub secret: RENDER_FRONTEND_DEPLOY_HOOK" >&2
