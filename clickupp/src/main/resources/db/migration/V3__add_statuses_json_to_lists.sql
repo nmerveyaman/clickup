@@ -1,0 +1,1 @@
+﻿ALTER TABLE lists ADD COLUMN IF NOT EXISTS statuses_json TEXT;
