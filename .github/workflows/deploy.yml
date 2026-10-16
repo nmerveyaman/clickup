@@ -1,0 +1,35 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Trigger Render deployments
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy backend
+        env:
+          DEPLOY_HOOK: ${{https://api.render.com/deploy/srv-db8nnd7f3r2c73eoh3rg?key=GZmKQLLZKhQ}}
+        run: |
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "Missing GitHub secret: RENDER_BACKEND_DEPLOY_HOOK" >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error --request POST "$DEPLOY_HOOK" --output /dev/null
+
+      - name: Deploy frontend
+        env:
+          DEPLOY_HOOK: ${{https://api.render.com/deploy/srv-db8npqbbc2fs73bhqkc0?key=j2w28f_3Yiw}}
+        run: |
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "Missing GitHub secret: RENDER_FRONTEND_DEPLOY_HOOK" >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error --request POST "$DEPLOY_HOOK" --output /dev/null
