@@ -10,6 +10,8 @@ RUN npm install
 
 # Tüm kaynak kodları kopyala ve Vite production build al
 COPY . .
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run build
 
 # 2. Aşama: Production Yayınlama (Nginx Web Server)

@@ -50,6 +50,8 @@ export default function DashboardPage() {
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const [sprintList, setSprintList] = useState<any[]>([]);
   const [selectedSprintId, setSelectedSprintId] = useState<string | null>(null);
+  const [availableWorkspaces, setAvailableWorkspaces] = useState<{ id: string; name: string }[]>([]);
+  const [workspaceLoadError, setWorkspaceLoadError] = useState('');
   const [sprintAnalytics, setSprintAnalytics] = useState<any>(null);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const selectedTaskRef = useRef<any>(null);
@@ -61,7 +63,9 @@ export default function DashboardPage() {
 
   // Resolve the active workspace and user from the URL or local storage.
   const queryParams = new URLSearchParams(window.location.search);
-  const workspaceId = queryParams.get('workspaceId') || localStorage.getItem('workspaceId');
+  const [workspaceId, setWorkspaceId] = useState(
+    () => queryParams.get('workspaceId') || localStorage.getItem('workspaceId') || ''
+  );
   const userId = queryParams.get('userId') || localStorage.getItem('userId');
   const notificationStorageKey = `clickup-notifications:${workspaceId || 'unknown'}`;
   const selectedSprintIdRef = useRef(selectedSprintId);
@@ -104,6 +108,39 @@ export default function DashboardPage() {
       if (userId) localStorage.setItem('userId', userId);
     }
   }, [workspaceId, userId, navigate]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchWorkspaces = async () => {
+      try {
+        const response = await fetch(
+          `${BASE_URL}/api/v1/workspaces/available?userId=${encodeURIComponent(userId)}`
+        );
+        if (!response.ok) {
+          throw new Error(`Workspace request failed (${response.status})`);
+        }
+        setAvailableWorkspaces(await response.json());
+        setWorkspaceLoadError('');
+      } catch (error) {
+        console.error('Failed to load workspaces:', error);
+        setWorkspaceLoadError('Workspace listesi yüklenemedi.');
+      }
+    };
+
+    fetchWorkspaces();
+  }, [userId]);
+
+  const handleWorkspaceChange = (nextWorkspaceId: string) => {
+    setWorkspaceId(nextWorkspaceId);
+    localStorage.setItem('workspaceId', nextWorkspaceId);
+    const params = new URLSearchParams(window.location.search);
+    params.set('workspaceId', nextWorkspaceId);
+    window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+    setSprintList([]);
+    setSelectedSprintId(null);
+    setSprintAnalytics(null);
+  };
 
   const fetchSprintAnalytics = useCallback(async (listId: string) => {
     setSelectedSprintId(listId);
@@ -792,6 +829,26 @@ export default function DashboardPage() {
         {/* Dashboard header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between xl:mb-8">
           <div className="flex flex-col gap-2">
+            {availableWorkspaces.length > 0 && (
+              <label className="flex w-fit items-center gap-2 text-xs text-gray-400">
+                Workspace
+                <select
+                  value={workspaceId}
+                  onChange={(event) => handleWorkspaceChange(event.target.value)}
+                  className="rounded-lg border border-gray-700 bg-[#161b22] px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+                  aria-label="Select workspace"
+                >
+                  {availableWorkspaces.map((workspace) => (
+                    <option key={workspace.id} value={workspace.id}>
+                      {workspace.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {workspaceLoadError && (
+              <p className="text-xs text-rose-400" role="alert">{workspaceLoadError}</p>
+            )}
 
             {/* Selected sprint */}
             <div className="flex items-center gap-3 flex-wrap">

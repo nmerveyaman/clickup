@@ -2,20 +2,45 @@ package com.example.demo.service;
 
 import com.example.demo.dto.ClickUpListDto;
 import com.example.demo.dto.ClickUpListResponseDto;
+import com.example.demo.dto.WorkspaceOptionDto;
 import com.example.demo.entity.ListEntity;
+import com.example.demo.entity.WorkspaceEntity;
 import com.example.demo.repository.ListRepository;
+import com.example.demo.repository.WorkspaceMemberRepository;
+import com.example.demo.repository.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class WorkspaceHierarchyService {
 
     private final ListRepository listRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final WorkspaceRepository workspaceRepository;
+
+    @Transactional(readOnly = true)
+    public List<WorkspaceOptionDto> getWorkspacesForUser(Long userId) {
+        List<String> workspaceIds = workspaceMemberRepository.findAllByUserIdOrderByIdAsc(userId).stream()
+                .map(member -> member.getWorkspaceId())
+                .distinct()
+                .toList();
+        Map<String, WorkspaceEntity> workspacesById = workspaceRepository.findAllById(workspaceIds).stream()
+                .collect(Collectors.toMap(WorkspaceEntity::getId, Function.identity()));
+
+        return workspaceIds.stream()
+                .map(workspacesById::get)
+                .filter(workspace -> workspace != null)
+                .map(workspace -> new WorkspaceOptionDto(workspace.getId(), workspace.getName()))
+                .toList();
+    }
 
     @Transactional(readOnly = true)
     public ClickUpListResponseDto getListsByWorkspaceId(String workspaceId) {
