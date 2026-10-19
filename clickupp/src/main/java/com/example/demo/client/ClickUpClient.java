@@ -130,7 +130,7 @@ public class ClickUpClient {
 
     public ClickUpTaskResponseDto getTasks(String teamId, String accessToken) {
         return restClient.get()
-                .uri(taskUri + "?include_closed=true", teamId)
+                .uri(taskUri + "?include_closed=true&subtasks=true", teamId)
                 .header("Authorization", formatToken(accessToken))
                 .retrieve()
                 .body(ClickUpTaskResponseDto.class);
