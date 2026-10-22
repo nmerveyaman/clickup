@@ -24,6 +24,7 @@ val testcontainersVersion = "1.20.4"
 
 dependencies {
 	// REST API
+	implementation ("org.springframework:spring-core")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	// JPA
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")

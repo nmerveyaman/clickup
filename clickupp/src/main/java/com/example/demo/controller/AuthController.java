@@ -2,11 +2,15 @@ package com.example.demo.controller;
 
 import com.example.demo.entity.UserEntity;
 import com.example.demo.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClientResponseException;
@@ -37,7 +41,9 @@ public class AuthController {
     @GetMapping({"/callback", "/"})
     public ResponseEntity<?> handleCallback(
             @RequestParam(value = "code", required = false) String code,
-            @RequestParam(value = "error", required = false) String oauthError
+            @RequestParam(value = "error", required = false) String oauthError,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent,
+            HttpServletRequest request
     ) {
         if (oauthError != null) {
             log.warn("ClickUp OAuth authorization was denied or failed");
@@ -48,13 +54,23 @@ public class AuthController {
             return ResponseEntity.badRequest().body("ClickUp did not return an authorization code.");
         }
 
-        log.info("ClickUp OAuth callback received; exchanging authorization code");
+        // 1. IP Adresini Güvenli Şekilde Yakala (Render/Cloudflare uyumlu)
+        String clientIp = request.getHeader("X-Forwarded-For");
+        if (clientIp == null || clientIp.isBlank()) {
+            clientIp = request.getRemoteAddr();
+        } else {
+            clientIp = clientIp.split(",")[0].trim();
+        }
+
+        log.info("ClickUp OAuth callback received from IP={} | User-Agent={}; exchanging code", clientIp, userAgent);
+
         UserEntity user;
         try {
-            user = authService.loginWithClickUpCode(code);
+            // 2. AuthService'e 3 parametreyi de eksiksiz gönderiyoruz
+            user = authService.loginWithClickUpCode(code, userAgent, clientIp);
         } catch (RestClientResponseException exception) {
-            log.warn("ClickUp OAuth callback failed; upstream returned HTTP {}",
-                    exception.getStatusCode().value());
+            log.warn("ClickUp OAuth callback failed for IP={}; upstream returned HTTP {}",
+                    clientIp, exception.getStatusCode().value());
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                     .body("ClickUp authentication failed (upstream HTTP "
                             + exception.getStatusCode().value() + ").");

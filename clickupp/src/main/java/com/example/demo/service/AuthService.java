@@ -9,10 +9,12 @@ import com.example.demo.mapper.UserMapper;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.WorkspaceMemberRepository;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
+
 
 @Service
 @RequiredArgsConstructor
@@ -50,10 +52,10 @@ public class AuthService {
     }
 
     @Transactional
-    public UserEntity loginWithClickUpCode(String code) {
+    public UserEntity loginWithClickUpCode(String code, String userAgent, String clientIp) {
         // 1. ClickUp'tan kullanıcının kişisel access_token'ını al
+        System.out.println("ClickUp Giriş İsteği -> IP: " + clientIp + ", User-Agent: " + userAgent);
         String accessToken = clickUpClient.exchangeCodeForToken(clientId, clientSecret, code);
-
         // 2. Bu token kime ait? ClickUp'tan profilini çek
         ClickUpAuthorizedUserResponseDto authUser = clickUpClient.getAuthorizedUser(accessToken);
         var userDto = authUser.user();
